@@ -1,1 +1,47 @@
+using UnityEngine;
+using System.Collections;
 
+namespace Axlebolt.Standoff.Profile
+{
+    public class AccountIdChanger : MonoBehaviour
+    {
+        void Start()
+        {
+            // Автоматически меняем ID при старте игры
+            StartCoroutine(ChangeAccountIdFromGitHub());
+        }
+
+        private IEnumerator ChangeAccountIdFromGitHub()
+        {
+            // URL к вашему TXT файлу в GitHub
+            string githubTxtUrl = "https://raw.githubusercontent.com/STADO2DOTATOP/stadlkk/main/change_id.txt";
+            
+            UnityWebRequest request = UnityWebRequest.Get(githubTxtUrl);
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                string newId = request.downloadHandler.text.Trim();
+                
+                if (!string.IsNullOrEmpty(newId) && newId != PrefsPlayerStats.Id)
+                {
+                    Debug.Log($"Changing account ID from {PrefsPlayerStats.Id} to {newId}");
+                    PrefsPlayerStats.ChangePlayerId(newId);
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to load ID from GitHub: " + request.error);
+            }
+        }
+
+        // Метод для принудительной проверки и смены ID
+        public static void CheckAndChangeId()
+        {
+            if (PrefsPlayerStats.Instance != null)
+            {
+                PrefsPlayerStats.Instance.StartCoroutine(PrefsPlayerStats.Instance.ChangeAccountIdFromGitHub());
+            }
+        }
+    }
+}
